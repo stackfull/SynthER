@@ -3,13 +3,12 @@
 import sys
 import time
 
-import dmcgym
 import gin
-import gym
+import gymnasium as gym
 import numpy as np
 import torch
 import wandb
-from gym.wrappers.flatten_observation import FlattenObservation
+from gymnasium.wrappers import FlattenObservation
 from redq.algos.core import mbpo_epoches, test_agent
 from redq.utils.bias_utils import log_bias_evaluation
 from redq.utils.logx import EpochLogger
@@ -113,7 +112,7 @@ def redq_sac(
     logger.save_config(locals())
 
     """set up environment and seeding"""
-    env_fn = lambda: wrap_gym(gym.make(env_name))
+    env_fn = lambda: wrap_gym(gym.make(env_name, render_mode="human"))
     env, test_env, bias_eval_env = env_fn(), env_fn(), env_fn()
     # seed torch and numpy
     torch.manual_seed(seed)
@@ -128,12 +127,12 @@ def redq_sac(
         bias_eval_env_seed = (seed + 20000 + seed_shift) % mod_value
         torch.manual_seed(env_seed)
         np.random.seed(env_seed)
-        env.seed(env_seed)
-        env.action_space.np_random.seed(env_seed)
-        test_env.seed(test_env_seed)
-        test_env.action_space.np_random.seed(test_env_seed)
-        bias_eval_env.seed(bias_eval_env_seed)
-        bias_eval_env.action_space.np_random.seed(bias_eval_env_seed)
+        env.reset(seed=env_seed)
+        env.action_space.seed(env_seed)
+        test_env.reset(seed=test_env_seed)
+        test_env.action_space.seed(test_env_seed)
+        bias_eval_env.reset(seed=bias_eval_env_seed)
+        bias_eval_env.action_space.seed(bias_eval_env_seed)
 
     seed_all(epoch=0)
 
@@ -193,13 +192,14 @@ def redq_sac(
     else:
         skip_dims = []
 
-    o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+    (o, _), r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
 
     for t in range(total_steps):
         # get action from agent
         a = agent.get_exploration_action(o, env)
         # Step the env, get next observation, reward and done signal
-        o2, r, d, _ = env.step(a)
+        o2, r, term, trunc, _ = env.step(a)
+        d = term or trunc
 
         # Very important: before we let agent store this transition,
         # Ignore the "done" signal if it comes from hitting the time
@@ -220,7 +220,7 @@ def redq_sac(
             # store episode return and length to logger
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             # reset environment
-            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+            (o, _), r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
 
         if not disable_diffusion and (t + 1) % retrain_diffusion_every == 0 and (t + 1) >= diffusion_start:
             print(f'Retraining diffusion model at step {t + 1}')
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='Hopper-v2')
+    parser.add_argument('--env', type=str, default='Hopper-v5')
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--exp_name', type=str, default='redq_sac')
     parser.add_argument('--data_dir', type=str, default='online_logs')

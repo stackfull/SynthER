@@ -4,7 +4,7 @@ import pathlib
 
 import d4rl
 import gin
-import gym
+import gymnasium as gym
 import numpy as np
 import torch
 import wandb

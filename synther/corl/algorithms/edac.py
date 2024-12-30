@@ -450,11 +450,12 @@ def eval_actor(
     actor.eval()
     episode_rewards = []
     for _ in range(n_episodes):
-        state, done = env.reset(), False
+        (state, _), done = env.reset(), False
         episode_reward = 0.0
         while not done:
             action = actor.act(state, device)
-            state, reward, done, _ = env.step(action)
+            state, reward, term, trunc, _ = env.step(action)
+            done = term or trunc
             episode_reward += reward
         episode_rewards.append(episode_reward)
 
