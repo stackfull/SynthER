@@ -8,4 +8,5 @@ numpy==2.2.1
 torch==2.5.1
 torchdiffeq==0.2.5
 tqdm==4.67.1
+wandb==0.19.1
 -e git+https://github.com/watchernyu/REDQ.git@3a2763889223677d74c734864244c41494e4832c#egg=redq
