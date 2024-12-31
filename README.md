@@ -23,38 +23,16 @@ see the paper:
 To install, clone the repository and run the following:
 
 ```bash 
-git submodule update --init --recursive
 pip install -r requirements.txt
 ```
 
-The code was tested on Python 3.8 and 3.9.
-If you don't have MuJoCo installed, follow the instructions here: https://github.com/openai/mujoco-py#install-mujoco.
+The code has been partially upgraded from the original at https://github.com/conglu1997/SynthER but is not fully working. It requires Python 3.10.
 
 ## Running Instructions
 
 ### Offline RL
 
-Diffusion model training (this automatically generates samples and saves them):
-
-```bash
-python3 synther/diffusion/train_diffuser.py --dataset halfcheetah-medium-replay-v2
-```
-
-Baseline without SynthER (e.g. on TD3+BC):
-
-```bash
-python3 synther/corl/algorithms/td3_bc.py --config synther/corl/yaml/td3_bc/halfcheetah/medium_replay_v2.yaml --checkpoints_path corl_logs/
-```
-
-Offline RL training with SynthER:
-
-```bash
-# Generating diffusion samples on the fly.
-python3 synther/corl/algorithms/td3_bc.py --config synther/corl/yaml/td3_bc/halfcheetah/medium_replay_v2.yaml --checkpoints_path corl_logs/ --name SynthER --diffusion.path path/to/model-100000.pt
-
-# Using saved diffusion samples.
-python3 synther/corl/algorithms/td3_bc.py --config synther/corl/yaml/td3_bc/halfcheetah/medium_replay_v2.yaml --checkpoints_path corl_logs/ --name SynthER --diffusion.path path/to/samples.npz
-```
+**TODO: currently not working**
 
 ### Online RL
 
@@ -62,20 +40,20 @@ Baselines (SAC, REDQ):
 
 ```bash
 # SAC.
-python3 synther/online/online_exp.py --env quadruped-walk-v0 --results_folder online_logs/ --exp_name SAC --gin_config_files 'config/online/sac.gin'
+python3 -m synther.online.online_exp --results_folder online_logs/ --exp_name SAC --gin_config_files 'config/online/sac.gin'
 
 # REDQ.
-python3 synther/online/online_exp.py --env quadruped-walk-v0 --results_folder online_logs/ --exp_name REDQ --gin_config_files 'config/online/redq.gin'
+python3 -m synther.online.online_exp --results_folder online_logs/ --exp_name REDQ --gin_config_files 'config/online/redq.gin'
 ```
 
 SynthER (SAC):
 
 ```bash
 # DMC environments.
-python3 synther/online/online_exp.py --env quadruped-walk-v0 --results_folder online_logs/ --exp_name SynthER --gin_config_files 'config/online/sac_synther_dmc.gin' --gin_params 'redq_sac.utd_ratio = 20' 'redq_sac.num_samples = 1000000'
+python3 -m synther.online.online_exp --results_folder online_logs/ --exp_name SynthER --gin_config_files 'config/online/sac_synther_dmc.gin' --gin_params 'redq_sac.utd_ratio = 20' 'redq_sac.num_samples = 1000000'
 
 # OpenAI environments (different gin config).
-python3 synther/online/online_exp.py --env HalfCheetah-v2 --results_folder online_logs/ --exp_name SynthER --gin_config_files 'config/online/sac_synther_openai.gin' --gin_params 'redq_sac.utd_ratio = 20' 'redq_sac.num_samples = 1000000'
+python3 -m synther.online.online_exp --results_folder online_logs/ --exp_name SynthER --gin_config_files 'config/online/sac_synther_openai.gin' --gin_params 'redq_sac.utd_ratio = 20' 'redq_sac.num_samples = 1000000'
 ```
 
 ## Thinking of adding SynthER to your own algorithm?
